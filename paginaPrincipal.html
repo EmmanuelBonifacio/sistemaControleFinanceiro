@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controle Financeiro Pessoal</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Controle Financeiro Pessoal</h1>
+      <p>
+        Mantenha suas entradas e saídas organizadas com gráficos em tempo real.
+      </p>
+    </header>
+    <main>
+      <div class="container">
+        <div class="left-column">
+          <div class="card">
+            <h2>Adicionar Transação</h2>
+            <form id="transaction-form">
+              <div>
+                <label for="date">Data</label>
+                <input type="date" id="date" required />
+              </div>
+              <div>
+                <label for="desc">Descrição</label>
+                <input
+                  type="text"
+                  id="desc"
+                  placeholder="Ex: Salário, Conta de luz"
+                  required
+                />
+              </div>
+              <div>
+                <label for="category">Categoria</label>
+                <input
+                  type="text"
+                  id="category"
+                  placeholder="Ex: Alimentação, Transporte"
+                  required
+                />
+              </div>
+              <div>
+                <label for="amount">Valor (R$)</label>
+                <input
+                  type="number"
+                  id="amount"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+              <div>
+                <label for="type">Tipo</label>
+                <select id="type" required>
+                  <option value="entrada">Entrada</option>
+                  <option value="saida">Saída</option>
+                </select>
+              </div>
+              <div class="buttons">
+                <button type="submit" class="btn-primary">Adicionar</button>
+                <button type="button" id="clear-all" class="btn-secondary">
+                  Limpar tudo
+                </button>
+              </div>
+              <div id="form-error" class="error" style="display: none"></div>
+            </form>
+          </div>
+          <div class="card">
+            <h2>Totais</h2>
+            <div class="totals">
+              <div class="total-item total-entradas">
+                <h3 id="total-entradas">R$ 0,00</h3>
+                <p>Entradas</p>
+              </div>
+              <div class="total-item total-saidas">
+                <h3 id="total-saidas">R$ 0,00</h3>
+                <p>Saídas</p>
+              </div>
+              <div class="total-item total-saldo">
+                <h3 id="total-saldo">R$ 0,00</h3>
+                <p>Saldo</p>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Filtros</h2>
+            <div class="filters">
+              <div>
+                <label for="filter-month">Mês</label>
+                <select id="filter-month">
+                  <option value="todos">Todos</option>
+                </select>
+              </div>
+              <div>
+                <label for="filter-type">Tipo</label>
+                <select id="filter-type">
+                  <option value="todos">Todos</option>
+                  <option value="entrada">Entrada</option>
+                  <option value="saida">Saída</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Transações</h2>
+            <table id="transactions-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Descrição</th>
+                  <th>Categoria</th>
+                  <th>Tipo</th>
+                  <th>Valor</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="transactions-body">
+                <tr class="empty-state">
+                  <td colspan="6">
+                    Nenhuma transação cadastrada ainda. Adicione uma para
+                    começar!
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="tooltip">
+              Dica: clique em ‘Limpar tudo’ para zerar os dados (isso apaga o
+              armazenamento local).<span class="tooltiptext"
+                >Isso removerá todas as transações permanentemente do seu
+                navegador.</span
+              >
+            </p>
+          </div>
+        </div>
+        <div class="right-column">
+          <div class="card">
+            <h2>Gráficos</h2>
+            <div class="chart-container">
+              <canvas id="monthly-chart"></canvas>
+            </div>
+            <div class="chart-container">
+              <canvas id="category-chart"></canvas>
+            </div>
+            <div class="chart-container">
+              <canvas id="balance-chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <script src="script.js"></script>
+  </body>
+</html>
