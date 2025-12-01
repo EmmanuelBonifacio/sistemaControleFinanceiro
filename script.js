@@ -28,7 +28,7 @@ function monthLabel(key) {
     .replace(".", "");
 }
 
-// Persistência
+// Persistência Mudar Para Banco de Dados
 function saveTransactions() {
   localStorage.setItem("transactions", JSON.stringify(transactions));
 }
