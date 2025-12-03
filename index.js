@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const port = 3000;
+const db = require("./db");
 
 // Middleware para fazer parsing de JSON
 app.use(express.json());
@@ -8,9 +9,6 @@ app.use(express.static("."));
 
 // Array para armazenar transações (em memória)
 let transacoes = [];
-
-// Array para armazenar usuários (em memória)
-let usuarios = [];
 
 // GET - Página de login
 app.get("/login", (req, res) => {
@@ -49,28 +47,14 @@ app.post("/cadastro", (req, res) => {
       .json({ erro: "Nome, email e senha são obrigatórios" });
   }
 
-  // Verifica se email já existe
-  const usuarioExistente = usuarios.find((u) => u.email === email);
-  if (usuarioExistente) {
-    return res.status(400).json({ erro: "Este email já está cadastrado" });
-  }
+  // Inserir no MySQL
+  const query = "INSERT INTO usuarios (name, email, password) VALUES (?, ?, ?)";
 
-  const novoUsuario = {
-    id: usuarios.length + 1,
-    name,
-    email,
-    password, // Em produção, fazer hash da senha!
-    dataCadastro: new Date(),
-  };
-
-  usuarios.push(novoUsuario);
-  res.status(201).json({
-    mensagem: "Cadastro realizado com sucesso!",
-    usuario: {
-      id: novoUsuario.id,
-      email: novoUsuario.email,
-      name: novoUsuario.name,
-    },
+  db.query(query, [name, email, password], (err, result) => {
+    if (err) {
+      return res.status(400).json({ erro: "Email já existe" });
+    }
+    res.status(201).json({ mensagem: "Cadastro realizado com sucesso!" });
   });
 });
 
