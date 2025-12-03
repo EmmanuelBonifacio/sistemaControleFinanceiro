@@ -9,6 +9,71 @@ app.use(express.static("."));
 // Array para armazenar transações (em memória)
 let transacoes = [];
 
+// Array para armazenar usuários (em memória)
+let usuarios = [];
+
+// GET - Página de login
+app.get("/login", (req, res) => {
+  res.sendFile("paginaLogin.html", { root: __dirname });
+});
+
+// POST - Realizar login
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ erro: "Email e senha são obrigatórios" });
+  }
+
+  const usuario = usuarios.find(
+    (u) => u.email === email && u.password === password
+  );
+
+  if (!usuario) {
+    return res.status(401).json({ erro: "Email ou senha inválidos" });
+  }
+
+  res.json({
+    mensagem: "Login realizado com sucesso!",
+    usuario: { id: usuario.id, email: usuario.email, name: usuario.name },
+  });
+});
+
+// POST - Cadastro de novo usuário
+app.post("/cadastro", (req, res) => {
+  const { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    return res
+      .status(400)
+      .json({ erro: "Nome, email e senha são obrigatórios" });
+  }
+
+  // Verifica se email já existe
+  const usuarioExistente = usuarios.find((u) => u.email === email);
+  if (usuarioExistente) {
+    return res.status(400).json({ erro: "Este email já está cadastrado" });
+  }
+
+  const novoUsuario = {
+    id: usuarios.length + 1,
+    name,
+    email,
+    password, // Em produção, fazer hash da senha!
+    dataCadastro: new Date(),
+  };
+
+  usuarios.push(novoUsuario);
+  res.status(201).json({
+    mensagem: "Cadastro realizado com sucesso!",
+    usuario: {
+      id: novoUsuario.id,
+      email: novoUsuario.email,
+      name: novoUsuario.name,
+    },
+  });
+});
+
 // GET - Página principal
 app.get("/", (req, res) => {
   res.sendFile("paginaPrincipal.html", { root: __dirname });
