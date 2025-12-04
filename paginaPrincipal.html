@@ -5,11 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Controle Financeiro Pessoal</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header>
-      <h1>Controle Financeiro Pessoal</h1>
+      <div class="header-top">
+        <h1>Controle Financeiro Pessoal</h1>
+        <button id="logout-btn" class="btn-logout">Sair</button>
+      </div>
       <p>
         Mantenha suas entradas e saídas organizadas com gráficos em tempo real.
       </p>
@@ -128,12 +132,21 @@
               </tbody>
             </table>
             <p class="tooltip">
-              Dica: clique em ‘Limpar tudo’ para zerar os dados (isso apaga o
+              Dica: clique em 'Limpar tudo' para zerar os dados (isso apaga o
               armazenamento local).<span class="tooltiptext"
                 >Isso removerá todas as transações permanentemente do seu
                 navegador.</span
               >
             </p>
+            <div class="pdf-actions">
+              <div class="dropdown">
+                <button class="btn-pdf">📄 Gerar PDF</button>
+                <div class="dropdown-content">
+                  <a href="#" onclick="generatePDFMonth()">Gerar PDF do Mês</a>
+                  <a href="#" onclick="generatePDFYear()">Gerar PDF Anual</a>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <div class="right-column">

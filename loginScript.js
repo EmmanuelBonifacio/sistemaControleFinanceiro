@@ -29,8 +29,10 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
 
     if (response.ok) {
       alert("Login realizado com sucesso!");
+      // Salvar dados do usuário no localStorage
+      localStorage.setItem("usuario", JSON.stringify(data.usuario));
       // Redirecionar para página principal
-      window.location.href = "/";
+      window.location.href = "/principal";
     } else {
       alert(data.erro || "Erro ao fazer login");
     }
