@@ -18,7 +18,7 @@ function fmtDate(iso) {
 }
 
 function monthKey(iso) {
-  return iso.substring(0, 7); // YYYY-MM
+  return iso.substring(0, 7);
 }
 
 function monthLabel(key) {
@@ -29,7 +29,6 @@ function monthLabel(key) {
     .replace(".", "");
 }
 
-// Carregar usuário do localStorage
 function loadUsuarioLogado() {
   const usuarioJSON = localStorage.getItem("usuario");
   if (usuarioJSON) {
@@ -37,10 +36,8 @@ function loadUsuarioLogado() {
   }
 }
 
-// Persistência - Usar apenas Banco de Dados (MySQL)
 function saveTransactions() {
-  // Não salva mais no localStorage, tudo vai pro MySQL
-  // Implementar endpoint POST para salvar no banco
+  // Não salva mais no localStorage
 }
 
 async function loadTransactions() {
@@ -71,24 +68,22 @@ function renderTable() {
 
   if (filtered.length === 0) {
     tbody.innerHTML =
-      '<tr class="empty-state"><td colspan="6">Nenhuma transação encontrada com os filtros aplicados.</td></tr>';
+      '<tr class="empty-state"><td colspan="6">Nenhuma transação encontrada.</td></tr>';
     return;
   }
 
   filtered.forEach((t) => {
     const row = document.createElement("tr");
     row.innerHTML = `
-            <td>${fmtDate(t.date)}</td>
-            <td>${t.description || t.desc}</td>
-            <td>${t.category}</td>
-            <td><span class="tag tag-${t.type}">${
+      <td>${fmtDate(t.date)}</td>
+      <td>${t.description || t.desc}</td>
+      <td>${t.category}</td>
+      <td><span class="tag tag-${t.type}">${
       t.type === "entrada" ? "Entrada" : "Saída"
     }</span></td>
-            <td>${currency(t.amount)}</td>
-            <td><button class="btn-remove" data-id="${
-              t.id
-            }">Remover</button></td>
-        `;
+      <td>${currency(t.amount)}</td>
+      <td><button class="btn-remove" data-id="${t.id}">Remover</button></td>
+    `;
     tbody.appendChild(row);
   });
 }
@@ -103,10 +98,10 @@ function renderTotals() {
 
   const entradas = filtered
     .filter((t) => t.type === "entrada")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
   const saidas = filtered
-    .filter((t) => t.type === "saida")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .filter((t) => t.type === "saída")
+    .reduce((sum, t) => sum + parseFloat(t.amount), 0);
   const saldo = entradas - saidas;
 
   document.getElementById("total-entradas").textContent = currency(entradas);
@@ -142,8 +137,8 @@ function renderCharts() {
   filtered.forEach((t) => {
     const key = monthKey(t.date);
     if (!monthlyData[key]) monthlyData[key] = { entradas: 0, saidas: 0 };
-    if (t.type === "entrada") monthlyData[key].entradas += t.amount;
-    else monthlyData[key].saidas += t.amount;
+    if (t.type === "entrada") monthlyData[key].entradas += parseFloat(t.amount);
+    else monthlyData[key].saidas += parseFloat(t.amount);
   });
   const labels = Object.keys(monthlyData).sort();
   const entradasData = labels.map((l) => monthlyData[l].entradas);
@@ -172,7 +167,7 @@ function renderCharts() {
   const categoryData = {};
   filtered.forEach((t) => {
     if (!categoryData[t.category]) categoryData[t.category] = 0;
-    categoryData[t.category] += t.amount;
+    categoryData[t.category] += parseFloat(t.amount);
   });
   const catLabels = Object.keys(categoryData);
   const catData = catLabels.map((c) => categoryData[c]);
@@ -206,8 +201,8 @@ function renderCharts() {
   const balanceData = [];
   const balanceLabels = [];
   filtered.forEach((t) => {
-    if (t.type === "entrada") balance += t.amount;
-    else balance -= t.amount;
+    if (t.type === "entrada") balance += parseFloat(t.amount);
+    else balance -= parseFloat(t.amount);
     balanceData.push(balance);
     balanceLabels.push(fmtDate(t.date));
   });
@@ -252,7 +247,6 @@ document
       return;
     }
 
-    // Salvar no MySQL
     try {
       const response = await fetch("/transacoes", {
         method: "POST",
@@ -270,7 +264,6 @@ document
       const data = await response.json();
 
       if (response.ok) {
-        // Mostrar mensagem de sucesso
         const successMsg = document.createElement("div");
         successMsg.className = "success-message";
         successMsg.textContent = "✓ Transação salva com sucesso!";
@@ -285,10 +278,8 @@ document
         `;
         this.parentElement.insertBefore(successMsg, this);
 
-        // Remover mensagem após 3 segundos
         setTimeout(() => successMsg.remove(), 3000);
 
-        // Recarregar transações
         await loadTransactions();
         renderAll();
         this.reset();
@@ -306,13 +297,22 @@ document
     }
   });
 
-document.getElementById("clear-all").addEventListener("click", function () {
-  if (confirm("Tem certeza que deseja apagar todas as transações?")) {
-    transactions = [];
-    saveTransactions();
-    renderAll();
-  }
-});
+document
+  .getElementById("clear-all")
+  .addEventListener("click", async function () {
+    if (confirm("Tem certeza que deseja apagar todas as transações?")) {
+      try {
+        for (const t of transactions) {
+          await fetch(`/transacoes/${t.id}`, { method: "DELETE" });
+        }
+        transactions = [];
+        renderAll();
+      } catch (error) {
+        console.error("Erro ao apagar transações:", error);
+        alert("Erro ao apagar transações");
+      }
+    }
+  });
 
 document
   .getElementById("transactions-body")
@@ -333,7 +333,6 @@ document
         const data = await response.json();
 
         if (response.ok) {
-          // Recarregar transações
           await loadTransactions();
           renderAll();
         } else {
@@ -356,14 +355,13 @@ document.getElementById("filter-type").addEventListener("change", function () {
   renderAll();
 });
 
-// Inicialização
 function renderAll() {
   renderTable();
   renderTotals();
   renderMonthFilter();
   renderCharts();
 }
-// Inicializar
+
 async function init() {
   loadUsuarioLogado();
   await loadTransactions();
@@ -372,7 +370,6 @@ async function init() {
 
 init();
 
-// Logout
 document.getElementById("logout-btn").addEventListener("click", () => {
   if (confirm("Tem certeza que deseja sair?")) {
     localStorage.removeItem("usuario");
@@ -380,7 +377,7 @@ document.getElementById("logout-btn").addEventListener("click", () => {
   }
 });
 
-// Função para gerar PDF do mês
+// PDF COMPACTO E PROFISSIONAL
 function generatePDFMonth() {
   if (!usuarioLogado) {
     alert("Usuário não identificado. Faça login novamente.");
@@ -410,76 +407,122 @@ function generatePDFMonth() {
           .reduce((sum, t) => sum + t.amount, 0)
       ).toFixed(2);
       const saldo = (totalEntradas - totalSaidas).toFixed(2);
-      const entradaCount = filteredTransactions.filter(
-        (t) => t.type === "entrada"
-      ).length;
-      const saidaCount = filteredTransactions.filter(
-        (t) => t.type === "saída"
-      ).length;
 
-      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório ${currentMonth}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f5f5f5;padding:20px}.container{max-width:900px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1)}.header{background:linear-gradient(135deg,#0d1117 0%,#1c2128 100%);color:white;padding:40px;text-align:center;position:relative}.header::before{content:'';position:absolute;top:0;right:0;width:200px;height:200px;background:rgba(88,166,255,.1);border-radius:50%;transform:translate(50%,-50%)}.header h1{font-size:32px;margin-bottom:5px;position:relative;z-index:1}.header p{font-size:16px;opacity:.9;position:relative;z-index:1}.user-section{background:#f8f9fa;padding:20px 40px;border-bottom:2px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center}.user-info{flex:1}.user-info p{margin:5px 0;color:#333;font-size:14px}.user-info strong{color:#0d1117;font-weight:600}.date-badge{background:linear-gradient(135deg,#58a6ff 0%,#3b82f6 100%);color:white;padding:12px 20px;border-radius:25px;font-weight:600;font-size:14px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;background:white}.stat-card{padding:30px;text-align:center;border-right:1px solid #e0e0e0}.stat-card:last-child{border-right:none}.stat-label{font-size:12px;color:#666;text-transform:uppercase;font-weight:600;letter-spacing:1px;margin-bottom:10px}.stat-value{font-size:28px;font-weight:700}.entrada-value{color:#56d364}.saida-value{color:#f85149}.saldo-value{color:#0d1117}.transacoes-section{padding:40px}.section-title{font-size:18px;font-weight:600;color:#0d1117;margin-bottom:20px;border-bottom:3px solid #58a6ff;padding-bottom:10px}table{width:100%;border-collapse:collapse;margin-bottom:30px}thead{background:#f8f9fa}th{padding:15px;text-align:left;font-weight:600;color:#0d1117;font-size:13px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e0e0e0}td{padding:15px;border-bottom:1px solid #e0e0e0;font-size:14px}tbody tr:hover{background:#f8f9fa}tbody tr:last-child td{border-bottom:none}.tipo-entrada{color:#56d364;font-weight:600}.tipo-saida{color:#f85149;font-weight:600}.empty-state{text-align:center;padding:40px;color:#666}.empty-state-icon{font-size:48px;margin-bottom:10px}.footer{background:#f8f9fa;padding:20px 40px;border-top:2px solid #e0e0e0;text-align:center;color:#666;font-size:12px}.footer-line{border-top:1px solid #ccc;margin:20px 0}</style></head><body><div class="container"><div class="header"><h1>📊 Relatório Financeiro</h1><p>Extrato detalhado de transações</p></div><div class="user-section"><div class="user-info"><p><strong>Usuário:</strong> ${
-        usuarioLogado.name
-      }</p><p><strong>Email:</strong> ${
-        usuarioLogado.email
-      }</p></div><div class="date-badge">${currentMonth}</div></div><div class="stats"><div class="stat-card"><div class="stat-label\">💰 Entradas</div><div class="stat-value entrada-value">R$ ${totalEntradas.replace(
-        ".",
-        ","
-      )}</div><div class="stat-label" style="margin-top:8px;color:#999">${entradaCount} transação${
-        entradaCount !== 1 ? "s" : ""
-      }</div></div><div class="stat-card"><div class="stat-label">📉 Saídas</div><div class="stat-value saida-value">R$ ${totalSaidas.replace(
-        ".",
-        ","
-      )}</div><div class="stat-label" style="margin-top:8px;color:#999">${saidaCount} transação${
-        saidaCount !== 1 ? "s" : ""
-      }</div></div><div class="stat-card"><div class="stat-label">⚖️ Saldo</div><div class="stat-value saldo-value">R$ ${saldo.replace(
-        ".",
-        ","
-      )}</div><div class="stat-label" style="margin-top:8px;color:${
-        saldo >= 0 ? "#56d364" : "#f85149"
-      }">${
-        saldo >= 0 ? "✓ Positivo" : "✗ Negativo"
-      }</div></div></div><div class="transacoes-section"><div class="section-title">📝 Detalhes das Transações</div>${
-        filteredTransactions.length > 0
-          ? `<table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th style="text-align:right">Valor</th></tr></thead><tbody>${filteredTransactions
-              .map(
-                (t) =>
-                  `<tr><td><strong>${fmtDate(t.date)}</strong></td><td>${
-                    t.description || t.desc || "N/A"
-                  }</td><td>${t.category || "N/A"}</td><td><span class="${
-                    t.type === "entrada" ? "tipo-entrada" : "tipo-saida"
-                  }">${
-                    t.type === "entrada" ? "Entrada" : "Saída"
-                  }</span></td><td style="text-align:right;${
-                    t.type === "entrada" ? "color:#56d364;" : "color:#f85149;"
-                  };font-weight:600">+ R$ ${parseFloat(t.amount)
-                    .toFixed(2)
-                    .replace(".", ",")}</td></tr>`
-              )
-              .join("")}</tbody></table>`
-          : `<div class="empty-state"><div class="empty-state-icon">📭</div><p>Nenhuma transação registrada neste mês</p></div>`
-      }</div><div class="footer"><p>Relatório gerado automaticamente pelo Sistema de Controle Financeiro</p><p>Data: ${new Date().toLocaleDateString(
-        "pt-BR"
-      )} às ${new Date().toLocaleTimeString(
-        "pt-BR"
-      )}</p><div class="footer-line"></div><p style="font-size:11px;color:#999">Documento gerado automaticamente.</p></div></div></body></html>`;
+      const html = `<!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Relatório ${currentMonth}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: Arial, sans-serif; font-size: 11px; color: #333; }
+          .header { background: linear-gradient(135deg, #0d1117 0%, #1c2128 100%); color: white; padding: 15px 20px; text-align: center; }
+          .header h1 { font-size: 18px; margin: 3px 0; }
+          .header p { font-size: 11px; opacity: 0.9; }
+          .info { background: #f0f0f0; padding: 8px 15px; border-bottom: 1px solid #ccc; display: flex; justify-content: space-between; font-size: 9px; }
+          .stats { display: flex; margin: 0; background: white; }
+          .stat { flex: 1; padding: 10px; border-right: 1px solid #ddd; text-align: center; }
+          .stat:last-child { border-right: none; }
+          .stat-label { font-size: 8px; color: #666; font-weight: bold; text-transform: uppercase; }
+          .stat-value { font-size: 14px; font-weight: bold; margin: 3px 0; }
+          .entrada { color: #56d364; }
+          .saida { color: #f85149; }
+          .saldo { color: #0d1117; }
+          .section { margin-top: 10px; padding: 0 10px; }
+          .section-title { font-size: 11px; font-weight: bold; color: #0d1117; border-bottom: 2px solid #58a6ff; padding-bottom: 3px; margin-bottom: 6px; }
+          table { width: 100%; border-collapse: collapse; font-size: 9px; }
+          th { background: #f0f0f0; padding: 5px 4px; text-align: left; border-bottom: 1px solid #ccc; font-weight: bold; }
+          td { padding: 5px 4px; border-bottom: 1px solid #eee; }
+          tr:nth-child(even) { background: #fafafa; }
+          .footer { text-align: center; font-size: 8px; color: #999; margin-top: 10px; padding: 8px; border-top: 1px solid #ccc; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>📊 Relatório - ${currentMonth}</h1>
+          <p>Extrato de Transações</p>
+        </div>
+        <div class="info">
+          <span><strong>Usuário:</strong> ${usuarioLogado.name}</span>
+          <span><strong>Email:</strong> ${usuarioLogado.email}</span>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-label">Entradas</div>
+            <div class="stat-value entrada">R$ ${totalEntradas.replace(
+              ".",
+              ","
+            )}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Saídas</div>
+            <div class="stat-value saida">R$ ${totalSaidas.replace(
+              ".",
+              ","
+            )}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Saldo</div>
+            <div class="stat-value saldo">R$ ${saldo.replace(".", ",")}</div>
+          </div>
+        </div>
+        <div class="section">
+          <div class="section-title">Transações</div>
+          ${
+            filteredTransactions.length > 0
+              ? `<table>
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Descrição</th>
+                      <th>Categoria</th>
+                      <th>Tipo</th>
+                      <th style="text-align: right">Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${filteredTransactions
+                      .map(
+                        (t) => `<tr>
+                      <td>${fmtDate(t.date)}</td>
+                      <td>${t.description || t.desc || "N/A"}</td>
+                      <td>${t.category || "N/A"}</td>
+                      <td>${t.type === "entrada" ? "Ent" : "Saí"}</td>
+                      <td style="text-align: right; color: ${
+                        t.type === "entrada" ? "#56d364" : "#f85149"
+                      }">R$ ${parseFloat(t.amount)
+                          .toFixed(2)
+                          .replace(".", ",")}</td>
+                    </tr>`
+                      )
+                      .join("")}
+                  </tbody>
+                </table>`
+              : `<p style="text-align: center; color: #999; padding: 10px;">Nenhuma transação</p>`
+          }
+        </div>
+        <div class="footer">
+          <p>Relatório gerado em ${new Date().toLocaleDateString("pt-BR")}</p>
+        </div>
+      </body>
+      </html>`;
 
       const opt = {
-        margin: 0,
+        margin: 3,
         filename: `relatorio_mes_${usuarioLogado.id}_${mes}_${ano}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2 },
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: { scale: 1.2 },
         jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
       };
 
       html2pdf().set(opt).from(html).save();
     })
     .catch((err) => {
-      console.error("Erro ao buscar transações:", err);
-      alert("Erro ao gerar relatório. Verifique o console.");
+      console.error("Erro:", err);
+      alert("Erro ao gerar relatório");
     });
 }
 
-// Função para gerar PDF anual
 function generatePDFYear() {
   if (!usuarioLogado) {
     alert("Usuário não identificado. Faça login novamente.");
@@ -508,76 +551,75 @@ function generatePDFYear() {
       ).toFixed(2);
       const saldo = (totalEntradas - totalSaidas).toFixed(2);
 
-      const monthlyCardsHTML = generateMonthlyCardsHTML(transacoesDaAno);
-
-      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório Anual ${currentYear}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f5f5f5;padding:20px}.container{max-width:900px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1)}.header{background:linear-gradient(135deg,#0d1117 0%,#1c2128 100%);color:white;padding:40px;text-align:center;position:relative}.header::before{content:'';position:absolute;top:0;right:0;width:200px;height:200px;background:rgba(86,211,100,.1);border-radius:50%;transform:translate(50%,-50%)}.header h1{font-size:32px;margin-bottom:5px;position:relative;z-index:1}.header p{font-size:16px;opacity:.9;position:relative;z-index:1}.user-section{background:#f8f9fa;padding:20px 40px;border-bottom:2px solid #e0e0e0}.user-info p{margin:5px 0;color:#333;font-size:14px}.user-info strong{color:#0d1117;font-weight:600}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;background:white}.stat-card{padding:30px;text-align:center;border-right:1px solid #e0e0e0}.stat-card:last-child{border-right:none}.stat-label{font-size:12px;color:#666;text-transform:uppercase;font-weight:600;letter-spacing:1px;margin-bottom:10px}.stat-value{font-size:28px;font-weight:700}.entrada-value{color:#56d364}.saida-value{color:#f85149}.saldo-value{color:#0d1117}.content{padding:40px}.section-title{font-size:18px;font-weight:600;color:#0d1117;margin:30px 0 20px 0;border-bottom:3px solid #58a6ff;padding-bottom:10px}.monthly-summary{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-bottom:20px}.month-card{background:#f8f9fa;padding:15px;border-radius:8px;border-left:4px solid #58a6ff}.month-name{font-size:14px;font-weight:600;color:#0d1117;margin-bottom:10px}.month-values{display:flex;justify-content:space-between;font-size:13px}.footer{background:#f8f9fa;padding:20px 40px;border-top:2px solid #e0e0e0;text-align:center;color:#666;font-size:12px}.footer-line{border-top:1px solid #ccc;margin:20px 0}</style></head><body><div class="container"><div class="header"><h1>📅 Relatório Anual</h1><p>Análise financeira completa - ${currentYear}</p></div><div class="user-section"><div class="user-info"><p><strong>Usuário:</strong> ${
-        usuarioLogado.name
-      }</p><p><strong>Email:</strong> ${
-        usuarioLogado.email
-      }</p><p><strong>Período:</strong> 01/01/${currentYear} - 31/12/${currentYear}</p></div></div><div class="stats"><div class="stat-card"><div class="stat-label">💰 Total de Entradas</div><div class="stat-value entrada-value">R$ ${totalEntradas.replace(
-        ".",
-        ","
-      )}</div></div><div class="stat-card"><div class="stat-label">📉 Total de Saídas</div><div class="stat-value saida-value">R$ ${totalSaidas.replace(
-        ".",
-        ","
-      )}</div></div><div class="stat-card"><div class="stat-label">⚖️ Saldo Anual</div><div class="stat-value saldo-value">R$ ${saldo.replace(
-        ".",
-        ","
-      )}</div></div></div><div class="content"><div class="section-title">📊 Resumo Mensal</div><div class="monthly-summary">${monthlyCardsHTML}</div></div><div class="footer"><p>Relatório Anual gerado automaticamente pelo Sistema de Controle Financeiro</p><p>Data: ${new Date().toLocaleDateString(
-        "pt-BR"
-      )} às ${new Date().toLocaleTimeString(
-        "pt-BR"
-      )}</p><div class="footer-line"></div><p style="font-size:11px;color:#999">Documento gerado automaticamente.</p></div></div></body></html>`;
+      const html = `<!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Relatório Anual ${currentYear}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: Arial, sans-serif; font-size: 11px; color: #333; }
+          .header { background: linear-gradient(135deg, #0d1117 0%, #1c2128 100%); color: white; padding: 15px 20px; text-align: center; }
+          .header h1 { font-size: 18px; margin: 3px 0; }
+          .info { background: #f0f0f0; padding: 8px 15px; border-bottom: 1px solid #ccc; font-size: 9px; }
+          .stats { display: flex; margin: 0; background: white; }
+          .stat { flex: 1; padding: 10px; border-right: 1px solid #ddd; text-align: center; }
+          .stat:last-child { border-right: none; }
+          .stat-label { font-size: 8px; color: #666; font-weight: bold; text-transform: uppercase; }
+          .stat-value { font-size: 14px; font-weight: bold; margin: 3px 0; }
+          .entrada { color: #56d364; }
+          .saida { color: #f85149; }
+          .saldo { color: #0d1117; }
+          .footer { text-align: center; font-size: 8px; color: #999; margin-top: 10px; padding: 8px; border-top: 1px solid #ccc; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>📅 Relatório Anual - ${currentYear}</h1>
+        </div>
+        <div class="info">
+          <p><strong>Usuário:</strong> ${
+            usuarioLogado.name
+          } | <strong>Email:</strong> ${usuarioLogado.email}</p>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-label">Total Entradas</div>
+            <div class="stat-value entrada">R$ ${totalEntradas.replace(
+              ".",
+              ","
+            )}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Total Saídas</div>
+            <div class="stat-value saida">R$ ${totalSaidas.replace(
+              ".",
+              ","
+            )}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Saldo Anual</div>
+            <div class="stat-value saldo">R$ ${saldo.replace(".", ",")}</div>
+          </div>
+        </div>
+        <div class="footer">
+          <p>Relatório gerado em ${new Date().toLocaleDateString("pt-BR")}</p>
+        </div>
+      </body>
+      </html>`;
 
       const opt = {
-        margin: 0,
+        margin: 3,
         filename: `relatorio_anual_${usuarioLogado.id}_${currentYear}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2 },
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: { scale: 1.2 },
         jsPDF: { orientation: "portrait", unit: "mm", format: "a4" },
       };
 
       html2pdf().set(opt).from(html).save();
     })
     .catch((err) => {
-      console.error("Erro ao buscar transações:", err);
-      alert("Erro ao gerar relatório anual. Verifique o console.");
+      console.error("Erro:", err);
+      alert("Erro ao gerar relatório anual");
     });
-}
-
-// Função auxiliar para gerar cards mensais no PDF anual
-function generateMonthlyCardsHTML(trans) {
-  const months = {};
-
-  trans.forEach((t) => {
-    const mKey = t.date.substring(0, 7);
-    if (!months[mKey]) {
-      months[mKey] = [];
-    }
-    months[mKey].push(t);
-  });
-
-  return Object.keys(months)
-    .sort()
-    .map((month) => {
-      const monthTrans = months[month];
-      const monthLbl = monthLabel(month);
-      const entrada = monthTrans
-        .filter((t) => t.type === "entrada")
-        .reduce((sum, t) => sum + t.amount, 0);
-      const saida = monthTrans
-        .filter((t) => t.type === "saída")
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      return `<div class="month-card"><div class="month-name">${monthLbl}</div><div class="month-values"><span style="color:#56d364">+R$ ${parseFloat(
-        entrada
-      )
-        .toFixed(2)
-        .replace(".", ",")}</span><span style="color:#f85149">-R$ ${parseFloat(
-        saida
-      )
-        .toFixed(2)
-        .replace(".", ",")}</span></div></div>`;
-    })
-    .join("");
 }
