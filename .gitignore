@@ -1,0 +1,75 @@
+# ==========================================
+# 📦 DEPENDÊNCIAS
+# ==========================================
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# ==========================================
+# 🔐 VARIÁVEIS DE AMBIENTE
+# ==========================================
+.env
+.env.local
+.env.*.local
+
+# ==========================================
+# 🗂️ SISTEMA OPERACIONAL
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ==========================================
+# 🔧 IDE E EDITORES
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# ==========================================
+# 📊 LOGS
+# ==========================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==========================================
+# 🗄️ BANCO DE DADOS
+# ==========================================
+*.sqlite
+*.sqlite3
+*.db
+*.sql
+
+# ==========================================
+# 📁 PASTAS GERADAS
+# ==========================================
+dist/
+build/
+.next/
+out/
+coverage/
+
+# ==========================================
+# 🎯 ESPECÍFICOS DO PROJETO
+# ==========================================
+.cache/
+temp/
+tmp/

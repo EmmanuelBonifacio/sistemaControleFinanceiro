@@ -396,17 +396,20 @@ function generatePDFMonth() {
   fetch(`/transacoes/mes/${usuarioLogado.id}/${mes}/${ano}`)
     .then((response) => response.json())
     .then((filteredTransactions) => {
-      const totalEntradas = parseFloat(
+      const totalEntradasNum = parseFloat(
         filteredTransactions
           .filter((t) => t.type === "entrada")
-          .reduce((sum, t) => sum + t.amount, 0)
-      ).toFixed(2);
-      const totalSaidas = parseFloat(
+          .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+      );
+      const totalSaidasNum = parseFloat(
         filteredTransactions
           .filter((t) => t.type === "saída")
-          .reduce((sum, t) => sum + t.amount, 0)
-      ).toFixed(2);
-      const saldo = (totalEntradas - totalSaidas).toFixed(2);
+          .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+      );
+      const saldoNum = totalEntradasNum - totalSaidasNum;
+      const totalEntradas = totalEntradasNum.toFixed(2);
+      const totalSaidas = totalSaidasNum.toFixed(2);
+      const saldo = saldoNum.toFixed(2);
 
       const html = `<!DOCTYPE html>
       <html>
@@ -539,17 +542,20 @@ function generatePDFYear() {
         return ano === currentYear;
       });
 
-      const totalEntradas = parseFloat(
+      const totalEntradasNum = parseFloat(
         transacoesDaAno
           .filter((t) => t.type === "entrada")
-          .reduce((sum, t) => sum + t.amount, 0)
-      ).toFixed(2);
-      const totalSaidas = parseFloat(
+          .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+      );
+      const totalSaidasNum = parseFloat(
         transacoesDaAno
           .filter((t) => t.type === "saída")
-          .reduce((sum, t) => sum + t.amount, 0)
-      ).toFixed(2);
-      const saldo = (totalEntradas - totalSaidas).toFixed(2);
+          .reduce((sum, t) => sum + parseFloat(t.amount), 0)
+      );
+      const saldoNum = totalEntradasNum - totalSaidasNum;
+      const totalEntradas = totalEntradasNum.toFixed(2);
+      const totalSaidas = totalSaidasNum.toFixed(2);
+      const saldo = saldoNum.toFixed(2);
 
       const html = `<!DOCTYPE html>
       <html>
