@@ -6,6 +6,11 @@ class TransacaoController {
   static listarPorUsuario(req, res) {
     const { usuarioId } = req.params;
 
+    // Verificar permissão
+    if (req.usuario.id !== parseInt(usuarioId)) {
+      return res.status(403).json({ erro: "Acesso negado" });
+    }
+
     Transacao.buscarPorUsuario(usuarioId, (err, results) => {
       if (err) {
         return res.status(500).json({ erro: "Erro ao buscar transações" });
@@ -35,8 +40,9 @@ class TransacaoController {
   static criar(req, res) {
     const { usuario_id, date, description, category, amount, type } = req.body;
 
-    if (!usuario_id || !date || !description || !category || !amount || !type) {
-      return res.status(400).json({ erro: "Faltam dados obrigatórios" });
+    // Verificar permissão
+    if (req.usuario.id !== parseInt(usuario_id)) {
+      return res.status(403).json({ erro: "Acesso negado" });
     }
 
     Transacao.criar(

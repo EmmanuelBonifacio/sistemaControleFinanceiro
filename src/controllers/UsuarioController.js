@@ -1,68 +1,98 @@
 const Usuario = require("../models/Usuario");
+const jwt = require("jsonwebtoken");
 
 class UsuarioController {
   // POST /cadastro
   static cadastro(req, res) {
-    const { name, email, password } = req.body;
+    try {
+      const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {
-      return res
-        .status(400)
-        .json({ erro: "Nome, email e senha são obrigatórios" });
+      Usuario.criar(name, email, password, (err, result) => {
+        if (err) {
+          return res.status(400).json({ erro: "Email já registrado" });
+        }
+        res.status(201).json({ mensagem: "Cadastro realizado com sucesso!" });
+      });
+    } catch (error) {
+      console.error("Erro em cadastro:", error);
+      res.status(500).json({ erro: "Erro ao processar cadastro" });
     }
-
-    Usuario.criar(name, email, password, (err, result) => {
-      if (err) {
-        return res.status(400).json({ erro: "Email já existe" });
-      }
-      res.status(201).json({ mensagem: "Cadastro realizado com sucesso!" });
-    });
   }
 
   // POST /login
   static login(req, res) {
-    const { email, password } = req.body;
+    try {
+      const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ erro: "Email e senha são obrigatórios" });
-    }
+      Usuario.validarLogin(email, password, (err, results) => {
+        try {
+          if (err) {
+            return res.status(500).json({ erro: "Erro no servidor" });
+          }
 
-    Usuario.validarLogin(email, password, (err, results) => {
-      if (err) {
-        return res.status(500).json({ erro: "Erro no servidor" });
-      }
+          if (!results || results.length === 0) {
+            return res.status(401).json({ erro: "Email ou senha inválidos" });
+          }
 
-      if (results.length === 0) {
-        return res.status(401).json({ erro: "Email ou senha inválidos" });
-      }
+          const usuario = results[0];
+          const secret = process.env.JWT_SECRET || "chave_secreta_default";
+          
+          const token = jwt.sign(
+            { id: usuario.id, email: usuario.email, name: usuario.name },
+            secret,
+            { expiresIn: "7d" }
+          );
 
-      const usuario = results[0];
-      res.json({
-        mensagem: "Login realizado com sucesso!",
-        usuario: {
-          id: usuario.id,
-          email: usuario.email,
-          name: usuario.name,
-        },
+          return res.json({
+            mensagem: "Login realizado com sucesso!",
+            token: token,
+            usuario: { id: usuario.id, email: usuario.email, name: usuario.name }
+          });
+        } catch (innerError) {
+          console.error("Erro em callback de login:", innerError);
+          return res.status(500).json({ erro: "Erro ao processar login" });
+        }
       });
-    });
+    } catch (error) {
+      console.error("Erro em login:", error);
+      res.status(500).json({ erro: "Erro ao processar login" });
+    }
   }
 
   // GET /usuario/:id
   static obterPerfil(req, res) {
-    const { id } = req.params;
+    try {
+      const { id } = req.params;
 
-    Usuario.buscarPorId(id, (err, results) => {
-      if (err) {
-        return res.status(500).json({ erro: "Erro ao buscar usuário" });
+      if (req.usuario.id !== parseInt(id)) {
+        return res.status(403).json({ erro: "Acesso negado" });
       }
 
-      if (results.length === 0) {
-        return res.status(404).json({ erro: "Usuário não encontrado" });
-      }
+      Usuario.buscarPorId(id, (err, results) => {
+        if (err) {
+          return res.status(500).json({ erro: "Erro ao buscar usuário" });
+        }
 
-      res.json(results[0]);
-    });
+        if (!results || results.length === 0) {
+          return res.status(404).json({ erro: "Usuário não encontrado" });
+        }
+
+        res.json(results[0]);
+      });
+    } catch (error) {
+      console.error("Erro em obterPerfil:", error);
+      res.status(500).json({ erro: "Erro ao buscar perfil" });
+    }
+  }
+
+  // POST /logout
+  static logout(req, res) {
+    try {
+      res.json({ mensagem: "Logout realizado com sucesso!" });
+    } catch (error) {
+      console.error("Erro em logout:", error);
+      res.status(500).json({ erro: "Erro ao fazer logout" });
+    }
   }
 }
 

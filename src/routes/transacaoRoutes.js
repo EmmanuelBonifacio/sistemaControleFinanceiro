@@ -1,6 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const TransacaoController = require("../controllers/TransacaoController");
+const { autenticacaoMiddleware } = require("../middleware/autenticacao");
+const { validarTransacao, validarAtualizacaoTransacao, handleValidationErrors } = require("../middleware/validacao");
+
+// Aplicar autenticação em todas as rotas de transação
+router.use(autenticacaoMiddleware);
 
 // GET - Listar transações do usuário
 router.get("/usuario/:usuarioId", TransacaoController.listarPorUsuario);
@@ -9,10 +14,10 @@ router.get("/usuario/:usuarioId", TransacaoController.listarPorUsuario);
 router.get("/:id", TransacaoController.obter);
 
 // POST - Criar nova transação
-router.post("/", TransacaoController.criar);
+router.post("/", validarTransacao, handleValidationErrors, TransacaoController.criar);
 
 // PUT - Atualizar transação
-router.put("/:id", TransacaoController.atualizar);
+router.put("/:id", validarAtualizacaoTransacao, handleValidationErrors, TransacaoController.atualizar);
 
 // DELETE - Deletar transação
 router.delete("/:id", TransacaoController.deletar);

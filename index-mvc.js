@@ -3,7 +3,13 @@
 // ==========================================
 require("dotenv").config();
 
+// Verificar se JWT_SECRET está configurado
+if (!process.env.JWT_SECRET) {
+  console.warn("⚠️  AVISO: JWT_SECRET não definido no .env");
+}
+
 const express = require("express");
+const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -13,6 +19,12 @@ const transacaoRoutes = require("./src/routes/transacaoRoutes");
 const apiRoutes = require("./src/routes/apiRoutes");
 
 // Middleware
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || "*",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 app.use(express.json());
 app.use(express.static(".")); // Serve arquivos estáticos
 
