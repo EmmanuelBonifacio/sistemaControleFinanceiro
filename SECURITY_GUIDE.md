@@ -3,6 +3,7 @@
 ## Implementações de Segurança Realizadas
 
 ### 1. ✅ Bcryptjs - Hash de Senhas
+
 - **Localização**: `src/models/Usuario.js`
 - **Rounds de Salt**: 10
 - **Processo**:
@@ -11,6 +12,7 @@
   - Nunca armazena senha em plaintext
 
 ### 2. ✅ JWT - Token de Autenticação
+
 - **Localização**: `src/middleware/autenticacao.js` e `src/controllers/UsuarioController.js`
 - **Tipo**: Bearer Token
 - **Formato**: `Authorization: Bearer {token}`
@@ -27,6 +29,7 @@
   ```
 
 ### 3. ✅ Express-Validator - Validação de Entrada
+
 - **Localização**: `src/middleware/validacao.js`
 - **Validadores Implementados**:
   - `validarCadastro`: Email, senha forte, nome
@@ -35,6 +38,7 @@
   - `validarAtualizacaoTransacao`: Campos opcionais
 
 ### 4. ✅ CORS - Controle de Origem
+
 - **Localização**: `index-mvc.js`
 - **Configuração**: Variável `CORS_ORIGIN` em `.env`
 - **Padrão**: `*` (aceita todas as origens em desenvolvimento)
@@ -44,6 +48,7 @@
 ### 1. Autenticação
 
 #### POST /cadastro
+
 ```bash
 curl -X POST http://localhost:3000/cadastro \
   -H "Content-Type: application/json" \
@@ -55,12 +60,14 @@ curl -X POST http://localhost:3000/cadastro \
 ```
 
 **Requisitos de Senha**:
+
 - Mínimo 8 caracteres
 - Pelo menos 1 letra maiúscula
 - Pelo menos 1 letra minúscula
 - Pelo menos 1 número
 
 #### POST /login
+
 ```bash
 curl -X POST http://localhost:3000/login \
   -H "Content-Type: application/json" \
@@ -71,6 +78,7 @@ curl -X POST http://localhost:3000/login \
 ```
 
 **Resposta**:
+
 ```json
 {
   "mensagem": "Login realizado com sucesso!",
@@ -84,24 +92,28 @@ curl -X POST http://localhost:3000/login \
 ```
 
 #### GET /usuario/:id (Protegido)
+
 ```bash
 curl -X GET http://localhost:3000/usuario/1 \
   -H "Authorization: Bearer {token}"
 ```
 
 **Requisitos**:
+
 - Token válido no header Authorization
 - ID do usuário deve corresponder ao seu próprio ID
 
 ### 2. Transações (Todas Protegidas)
 
 #### GET /transacoes/usuario/:usuarioId
+
 ```bash
 curl -X GET http://localhost:3000/transacoes/usuario/1 \
   -H "Authorization: Bearer {token}"
 ```
 
 #### POST /transacoes (Protegido)
+
 ```bash
 curl -X POST http://localhost:3000/transacoes \
   -H "Content-Type: application/json" \
@@ -117,10 +129,12 @@ curl -X POST http://localhost:3000/transacoes \
 ```
 
 **Requisitos**:
+
 - Token válido
 - `usuario_id` deve ser igual ao seu próprio ID
 
 #### PUT /transacoes/:id (Protegido)
+
 ```bash
 curl -X PUT http://localhost:3000/transacoes/5 \
   -H "Content-Type: application/json" \
@@ -132,6 +146,7 @@ curl -X PUT http://localhost:3000/transacoes/5 \
 ```
 
 #### DELETE /transacoes/:id (Protegido)
+
 ```bash
 curl -X DELETE http://localhost:3000/transacoes/5 \
   -H "Authorization: Bearer {token}"
@@ -140,6 +155,7 @@ curl -X DELETE http://localhost:3000/transacoes/5 \
 ## Variáveis de Ambiente Necessárias
 
 Arquivo `.env`:
+
 ```env
 # Banco de Dados
 DB_HOST=localhost
@@ -163,19 +179,23 @@ CORS_ORIGIN=*
 ## Tratamento de Erros
 
 ### 401 Unauthorized
+
 - Token não fornecido
 - Token inválido
 - Token expirado
 
 ### 403 Forbidden
+
 - Tentativa de acessar dados de outro usuário
 - Falta de permissão
 
 ### 400 Bad Request
+
 - Validação falhou
 - Campos obrigatórios faltando
 
 ### 500 Internal Server Error
+
 - Erro no servidor
 
 ## Fluxo de Autenticação
@@ -231,35 +251,40 @@ CORS_ORIGIN=*
 
 ```javascript
 // Cadastro
-fetch('http://localhost:3000/cadastro', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+fetch("http://localhost:3000/cadastro", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    name: 'João',
-    email: 'joao@email.com',
-    password: 'Senha123'
-  })
-}).then(r => r.json()).then(console.log);
+    name: "João",
+    email: "joao@email.com",
+    password: "Senha123",
+  }),
+})
+  .then((r) => r.json())
+  .then(console.log);
 
 // Login
-fetch('http://localhost:3000/login', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+fetch("http://localhost:3000/login", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    email: 'joao@email.com',
-    password: 'Senha123'
-  })
-}).then(r => r.json())
-  .then(data => {
-    localStorage.setItem('token', data.token);
-    console.log('Token salvo:', data.token);
+    email: "joao@email.com",
+    password: "Senha123",
+  }),
+})
+  .then((r) => r.json())
+  .then((data) => {
+    localStorage.setItem("token", data.token);
+    console.log("Token salvo:", data.token);
   });
 
 // Requisição protegida
-const token = localStorage.getItem('token');
-fetch('http://localhost:3000/usuario/1', {
-  headers: { 'Authorization': `Bearer ${token}` }
-}).then(r => r.json()).then(console.log);
+const token = localStorage.getItem("token");
+fetch("http://localhost:3000/usuario/1", {
+  headers: { Authorization: `Bearer ${token}` },
+})
+  .then((r) => r.json())
+  .then(console.log);
 ```
 
 ## Status da Implementação

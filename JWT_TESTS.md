@@ -117,26 +117,34 @@ $logoutResponse = Invoke-RestMethod -Uri "http://localhost:3000/logout" `
 ## 🔐 Estrutura de Segurança Implementada
 
 ### Camada 1: Hashing de Senha
+
 ```javascript
 // src/models/Usuario.js
-bcrypt.hash(password, 10) // Hash com 10 salt rounds
-bcrypt.compare(password, storedHash) // Validação segura
+bcrypt.hash(password, 10); // Hash com 10 salt rounds
+bcrypt.compare(password, storedHash); // Validação segura
 ```
 
 ### Camada 2: Autenticação JWT
+
 ```javascript
 // src/middleware/autenticacao.js
-jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' })
-jwt.verify(token, JWT_SECRET)
+jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+jwt.verify(token, JWT_SECRET);
 ```
 
 ### Camada 3: Proteção de Rotas
+
 ```javascript
 // src/routes/usuarioRoutes.js
-router.get("/usuario/:id", autenticacaoMiddleware, UsuarioController.obterPerfil);
+router.get(
+  "/usuario/:id",
+  autenticacaoMiddleware,
+  UsuarioController.obterPerfil
+);
 ```
 
 ### Camada 4: Verificação de Permissões
+
 ```javascript
 // src/controllers/UsuarioController.js
 if (req.usuario.id !== parseInt(id)) {
@@ -149,6 +157,7 @@ if (req.usuario.id !== parseInt(id)) {
 ## 📊 Dados de Teste
 
 **Usuário criado durante testes:**
+
 - ID: 4
 - Nome: Teste Final
 - Email: final@test.com
@@ -160,18 +169,22 @@ if (req.usuario.id !== parseInt(id)) {
 ## 🚀 Próximos Passos (Opcionais)
 
 1. **Ativar Validação Express-Validator**
+
    - Adicionar middlewares de validação às rotas
    - Validar email, força de senha, etc.
 
 2. **Rate Limiting**
+
    - Instalar `express-rate-limit`
    - Limitar tentativas de login (5 por 15 minutos)
 
 3. **Refresh Tokens**
+
    - Implementar tokens de renovação de sessão
    - Aumentar segurança para tokens de longa duração
 
 4. **HttpOnly Cookies**
+
    - Alternativa aos Bearer tokens
    - Proteção contra XSS
 

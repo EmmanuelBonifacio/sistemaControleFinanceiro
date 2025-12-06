@@ -11,7 +11,12 @@ class UsuarioController {
         if (err) {
           return res.status(400).json({ erro: "Email já registrado" });
         }
-        res.status(201).json({ mensagem: "Cadastro realizado com sucesso!" });
+        res.status(201).json({
+          mensagem: "Cadastro realizado com sucesso!",
+          id: result.insertId,
+          name: name,
+          email: email,
+        });
       });
     } catch (error) {
       console.error("Erro em cadastro:", error);
@@ -36,7 +41,7 @@ class UsuarioController {
 
           const usuario = results[0];
           const secret = process.env.JWT_SECRET || "chave_secreta_default";
-          
+
           const token = jwt.sign(
             { id: usuario.id, email: usuario.email, name: usuario.name },
             secret,
@@ -46,7 +51,11 @@ class UsuarioController {
           return res.json({
             mensagem: "Login realizado com sucesso!",
             token: token,
-            usuario: { id: usuario.id, email: usuario.email, name: usuario.name }
+            usuario: {
+              id: usuario.id,
+              email: usuario.email,
+              name: usuario.name,
+            },
           });
         } catch (innerError) {
           console.error("Erro em callback de login:", innerError);

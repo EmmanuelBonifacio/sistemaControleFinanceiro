@@ -31,7 +31,7 @@ class Usuario {
   // Validar login comparando senha com hash
   static validarLogin(email, password, callback) {
     const query = "SELECT * FROM usuarios WHERE email = ?";
-    
+
     db.query(query, [email], (err, results) => {
       if (err) {
         return callback(err);
